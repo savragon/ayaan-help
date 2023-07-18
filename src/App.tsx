@@ -1,179 +1,180 @@
-import React, { useState } from "react";
-import "./App.css";
-import ContactForm from "./ContactForm";
+"use client";
 
-import {
-  FaCheckCircle,
-  FaBars,
-  FaThumbsUp,
-  FaRegUserCircle,
-} from "react-icons/fa";
+import React, { useState, useEffect } from "react";
+import { FaBars } from "react-icons/fa";
+import weather from "weather-js";
 
-function App() {
-  const [isOpen, setIsOpen] = useState<boolean>(false);
+export default function Home() {
+  const [selectedState, setSelectedState] = useState("");
+  const [weatherData, setWeatherData] = useState<any | null>(null);
+  const [performanceCriteria, setPerformanceCriteria] = useState<string>("");
 
-  const handleOpen = () => {
-    setIsOpen(true);
+  const handleStateChange = async (
+    event: React.ChangeEvent<HTMLSelectElement>
+  ) => {
+    setSelectedState(event.target.value);
+
+    // Fetch weather data using weather-js
+    weather.find(
+      { search: event.target.value, degreeType: "F" },
+      function (err, result) {
+        if (err) {
+          console.error(err);
+          // Handle error here if needed
+        } else if (result && result[0]) {
+          setWeatherData(result[0]); // Set the weather data in state
+        }
+      }
+    );
   };
 
-  const handleClose = () => {
-    setIsOpen(false);
-  };
+  const calculatePoints = (weatherData: any): number => {
+    let points = 0;
 
-  const [count, setCount] = useState(0);
-  const handleClick = () => {
-    const sectionTwo = document.getElementById("section-2");
-    if (sectionTwo) {
-      sectionTwo.scrollIntoView({ behavior: "smooth" });
+    // Check if it's Friday, Saturday, or Sunday
+    const currentDay = new Date().getDay();
+    if (currentDay === 5 || currentDay === 6 || currentDay === 0) {
+      points += 2;
     }
 
-    const [isOpen, setIsOpen] = useState<boolean>(false);
+    // Check if it's evening (Assuming evening is from 6 PM to 11:59 PM)
+    const currentHour = new Date().getHours();
+    if (currentHour >= 18) {
+      points += 2;
+    }
 
-    const handleOpen = () => {
-      setIsOpen(true);
-    };
+    // Check if it's brunch time (Assuming brunch time is from 10 AM to 2 PM)
+    if (currentHour >= 10 && currentHour <= 14) {
+      points += 1;
+    }
 
-    const handleClose = () => {
-      setIsOpen(false);
-    };
+    // Check weather conditions and temperature
+    if (weatherData.current.skytext === "Sunny") {
+      points += 3;
+
+      // Check if it's sunny the entire day (Assuming that if it's sunny now, it will be sunny throughout the day)
+      if (
+        weatherData.forecast.every((day: any) => day.skytextday === "Sunny")
+      ) {
+        points += 1;
+      }
+    }
+
+    // Check if it's very warm and hot (Assuming a temperature of 80Â°F and above is very warm and hot)
+    if (weatherData.current.temperature >= 80) {
+      points += 1;
+    }
+
+    return points;
   };
+
+  const updatePerformanceCriteria = (points: number): string => {
+    if (points >= 7) {
+      return "Good";
+    } else if (points >= 4) {
+      return "Moderate";
+    } else {
+      return "Bad";
+    }
+  };
+
+  useEffect(() => {
+    // Calculate points and update performance criteria whenever weatherData or selectedState changes
+    if (weatherData) {
+      const points = calculatePoints(weatherData);
+      const criteria = updatePerformanceCriteria(points);
+      setPerformanceCriteria(criteria);
+    }
+  }, [weatherData, selectedState]);
+
   return (
-    <div className="App">
-      <div className=" fixed top-5 left-5 ">
-        {" "}
-        {!isOpen && (
-          <FaBars className="text-3xl cursor-pointer " onClick={handleOpen} />
-        )}
-        <div className={`tab ${isOpen ? "open" : ""}`}>
-          <div className="tab-content">
-            <button
-              className="close-button font-medium text-xl text-black flex text-left "
-              onClick={handleClose}
-            >
-              Close
-            </button>
-            <div className="text-white text-2xl">
-              <h1 className="my-5">About</h1>
-              <h1 className="my-5">Graphics</h1>
-              <h1 className="my-5">Videos</h1>
-              <h1 className="my-5">Contact</h1>
-            </div>
-          </div>
-        </div>
+    <div className="bg-white h-screen w-full font-medium">
+      <FaBars className="text-white fixed top-5 left-5 text-3xl" />
+      <div className="bg-blue-400 text-white p-5 justify-center items-center">
+        <h1 className="text-center text-3xl">CarCast</h1>
       </div>
-      <section id="section-1">
-        <div className="bg-orange-200 flex items-center justify-center flex-col h-screen">
-          <h1 className="text-center text-emerald-700 text-8xl font-bold hover:text-9xl duration-1000">
-            Surya R.A.
-          </h1>
-          <p className="text-center pt-10 text-brown text-2xl font-bold ">
-            Graphic Designer
-          </p>
-          <p className="text-center pt-1 text-brown text-2xl font-bold ">
-            Performance Video Editor
-          </p>
-          <p className="text-center pt-1 text-brown text-2xl font-bold ">
-            Front End Develepor
-          </p>
-          <div className="flex justify-center items-center p-10">
-            <button
-              type="button"
-              className=" text-white text-xl font-light pt-3 pb-3 pl-10 pr-10 rounded-md bg-emerald-700 transition-all hover:bg-emerald-500 duration-300"
-              onClick={handleClick}
+      <div>
+        <div className="text-black font-medium flex items-center justify-center p-5">
+          <div className="relative w-full lg:max-w-sm">
+            <select
+              className="w-full p-2.5 text-gray-500 bg-white border rounded-md shadow-sm outline-none appearance-none focus:border-indigo-600"
+              value={selectedState}
+              onChange={handleStateChange}
             >
-              Explore
-            </button>
+              <option>Choose Your State</option>
+              <option>Alabama</option>
+              <option>Alaska</option>
+              <option>Arizona</option>
+              <option>Arkansas</option>
+              <option>California</option>
+              <option>Colorado</option>
+              <option>Connecticut</option>
+              <option>Delaware</option>
+              <option>Florida</option>
+              <option>Georgia</option>
+              <option>Hawaii</option>
+              <option>Idaho</option>
+              <option>Illinois</option>
+              <option>Indiana</option>
+              <option>Iowa</option>
+              <option>Kansas</option>
+              <option>Kentucky</option>
+              <option>Louisiana</option>
+              <option>Maine</option>
+              <option>Maryland</option>
+              <option>Massachusetts</option>
+              <option>Michigan</option>
+              <option>Minnesota</option>
+              <option>Mississippi</option>
+              <option>Missouri</option>
+              <option>Montana</option>
+              <option>Nebraska</option>
+              <option>Nevada</option>
+              <option>New Hampshire</option>
+              <option>New Jersey</option>
+              <option>New Mexico</option>
+              <option>New York</option>
+              <option>North Carolina</option>
+              <option>North Dakota</option>
+              <option>Ohio</option>
+              <option>Oklahoma</option>
+              <option>Oregon</option>
+              <option>Pennsylvania</option>
+              <option>Rhode Island</option>
+              <option>South Carolina</option>
+              <option>South Dakota</option>
+              <option>Tennessee</option>
+              <option>Texas</option>
+              <option>Utah</option>
+              <option>Vermont</option>
+              <option>Virginia</option>
+              <option>Washington</option>
+              <option>West Virginia</option>
+              <option>Wisconsin</option>
+              <option>Wyoming</option>
+            </select>
           </div>
         </div>
-      </section>
-      <section id="section-2">
-        <div>
-          <div className="bg-emerald-700">
-            <h1 className="p-20 text-orange-200 font-bold text-7xl text-center">
-              About
-            </h1>
-            <div className="">
-              <div className=" p-10 mx-80 rounded-md bg-orange-200 shadow-emerald-900 shadow-2xl">
-                <div className="grid grid-cols-2 gap-5">
-                  <div className="p-5 bg-emerald-700 rounded-md  duration-300 justify-center items-center flex flex-col">
-                    <div className="mb-5 bg-orange-200 rounded-full p-2 flex items-center justify-center">
-                      <FaThumbsUp className="text-5xl text-emerald-700 p-2" />
-                    </div>
-                    <h1 className="text-orange-200 font-medium text-xl text-center">
-                      100% Satisfaction
-                    </h1>
-                  </div>
-                  <div className="p-5 bg-emerald-700 rounded-md  justify-center items-center flex flex-col ">
-                    <FaCheckCircle className="text-6xl text-orange-200 mb-5 " />
-
-                    <h1 className="text-orange-200 font-medium text-xl text-center">
-                      200+ Projects
-                    </h1>
-                  </div>
-                  <div className="col-span-2 p-5 bg-emerald-700 rounded-md  duration-300">
-                    <div className="text-orange-200 mx-16 my-4 font-medium text-2xl flex flex-row justify-between">
-                      <div className="text-center">
-                        <h1>3+ Years in</h1>
-                        <p>Graphic Design</p>
-                        <p>Video Editing</p>
-                      </div>
-
-                      <FaRegUserCircle className="text-8xl "></FaRegUserCircle>
-                      <div className="text-center">
-                        <h1>6+ Months</h1>
-                        <p>Front End</p>
-                        <p>Development</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="mt-10 pb-20">
-                <div className="mx-80 p-10 rounded-md bg-orange-200 shadow-emerald-900 shadow-2xl">
-                  <h1 className=" text-center text-brown text-md md:text-2xl">
-                    I am a multi-talented freelancer skilled in graphic design,
-                    performance video editing, and front-end development. My
-                    portfolio showcases my creative and technical skills, such
-                    as graphic design, video editing, and web development using
-                    HTML and Tailwinds CSS.
-                  </h1>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section>
-        <div className="bg-black2 text-white font-medium text-xl p-5 flex flex-row justify-center items-center ">
-          <h1 className=" mx-20 underline underline-offset-4">Graphics</h1>
-          <h1 className=" mx-20 underline underline-offset-4">Videos</h1>
-        </div>
-      </section>
-
-      <section>
-        <div className="bg-black1">
-          <h1 className="text-white font-medium text-center p-20 text-7xl underline-offset-8">
-            Graphic Design Work
-          </h1>
-          <p className=" text-white font-medium text-3xl text-center mb-14 px-36">
-            This consists of Logos, Fliers, Headers, Thumbnails, Package
-            Designs, Stream Overlays, Ads, Stickers, Business Cards, Color
-            Correction and More!
+        {selectedState && (
+          <p className="text-center font-medium text-2xl text-black">
+            The CarCast for: {selectedState}
           </p>
-          <div className="mt-20 px-72 flex justify-center items-center">
-            <img src="portfoliogfx.png" alt="" />
-          </div>
+        )}
+      </div>
+      <div className="grid grid-cols-2 ">
+        <div className="rounded-md p-10 m-20 shadow-2xl bg-white">
+          <p>Performance Criteria: {performanceCriteria}</p>
+          {/* Display other weather information */}
+          {weather && (
+            <>
+              <p>Location: {weather.location.name}</p>
+              <p>Current Temperature: {weather.current.temperature}°F</p>
+              <p>Sky: {weather.current.skytext}</p>
+            </>
+          )}
         </div>
-      </section>
-      <section>
-        <div className="min-h-screen">
-          {/* Other components */}
-          <ContactForm />
-        </div>
-      </section>
+        <div className="rounded-md p-10 m-20 shadow-2xl bg-white"></div>
+      </div>
     </div>
   );
 }
-
-export default App;
