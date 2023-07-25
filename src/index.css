@@ -1,3 +1,8 @@
 @import "tailwindcss/base";
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
+.bg-custom {
+    background-image: url("/images/carcast.png");
+    /* You can add other background properties like size, position, repeat, etc. here */
+  }
+
